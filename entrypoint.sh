@@ -7,6 +7,31 @@
 # Taken from CentOS6 SSHD init script.
 #
 
+#
+# Jenkins .ssh/authorized_keys handling.
+#
+if [[ -n "${JENKINS_AUTHORIZED_KEYS}" && -f /keys/${JENKINS_AUTHORIZED_KEYS} && -s /keys/${JENKINS_AUTHORIZED_KEYS} ]]
+then
+  echo "JENKINS_AUTHORIZED_KEYS specified, file found.  Copying."
+  echo 'PubkeyAuthentication yes' >> /etc/ssh/sshd_config
+  cp /keys/${JENKINS_AUTHORIZED_KEYS} /var/lib/jenkins/.ssh/authorized_keys
+  chmod 0644 /var/lib/jenkins/.ssh/authorized_keys
+  chown -R jenkins:jenkins /var/lib/jenkins/.ssh/authorized_keys
+fi
+
+#
+# Jenkins password handling.
+#
+if [[ -n "${JENKINS_DISABLE_PASSWD}" ]] ; then
+  echo "JENKINS_DISABLE_PASSWD set, locking password access."
+  sed -i 's/PasswordAuthentication yes//g' /etc/ssh/sshd_config
+  echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config
+fi
+
+
+#
+# Host key handling.
+#
 [ -f /etc/sysconfig/sshd ] && . /etc/sysconfig/sshd
 
 # Some functions to make the below more readable
@@ -71,6 +96,9 @@ do_dsa_keygen() {
 }
 
 
+#
+# Entry point
+#
 [ -x $SSHD ] || exit 5
 [ -f /etc/ssh/sshd_config ] || exit 6
 do_rsa_keygen

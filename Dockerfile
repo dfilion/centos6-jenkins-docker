@@ -20,6 +20,8 @@ RUN /usr/bin/yum -y install \
 # Add Mercurial support.
 RUN /usr/bin/yum -y localinstall http://mercurial.selenic.com/release/centos6/RPMS/x86_64/mercurial-3.4.2-0.x86_64.rpm
 
+RUN yum clean all
+
 # Fix SSH's PAM configuration so we can login.
 RUN sed -i 's|session    required     pam_loginuid.so|session    optional     pam_loginuid.so|g' /etc/pam.d/sshd
 
@@ -30,6 +32,13 @@ RUN sed -i 's|Defaults    requiretty|#Defaults    requiretty|' /etc/sudoers && e
 # a shell so it can login.
 RUN useradd -d /var/lib/jenkins -m -s /bin/bash -c "Jenkins Continuous Build Account" jenkins
 RUN echo "jenkins:jenkins" | chpasswd
+
+RUN mkdir /var/lib/jenkins/.ssh ; \
+	chmod 0700 /var/lib/jenkins/.ssh ; \
+	chown -R jenkins:jenkins /var/lib/jenkins/.ssh
+
+RUN mkdir /keys
+VOLUME /keys
 
 EXPOSE 22
 
